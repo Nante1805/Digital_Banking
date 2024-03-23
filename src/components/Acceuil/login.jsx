@@ -114,6 +114,7 @@ const inputStyle = {
   outline: "none",
   margin: "1.5em auto",
   transition: "all 0.5s ease",
+  
 };
 
 const submitButtonStyle = {
@@ -126,6 +127,7 @@ const submitButtonStyle = {
   border: "1px solid #008080",
   marginTop: "1.5em",
   marginBottom: "1em",
+  cursor : "pointer"
 };
 
 export default LoginPage;

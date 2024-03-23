@@ -1,6 +1,24 @@
 import { Link } from 'react-router-dom';
-
+import { useState } from 'react';
 function SignupPage() {
+  const [error, setError] = useState('');
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+
+    const birthDate = new Date(document.getElementById('birthday').value);
+    const ageDiff = Date.now() - birthDate.getTime();
+    const ageDate = new Date(ageDiff);
+    const userAge = Math.abs(ageDate.getUTCFullYear() - 1970);
+
+    if (userAge < 21) {
+      setError('Vous devez avoir au moins 21 ans pour vous inscrire.');
+    } else {
+      setError('');
+      // Continuer le traitement du formulaire
+    }
+  };
+
     return (
       <>
         <div className="container-fluid">
@@ -40,14 +58,18 @@ function SignupPage() {
                       placeholder="Lastname"
                       style={inputStyle}
                     />
+                    <form onSubmit={handleSubmit}>
                     <input
-                      type="text"
+                      type="date"
                       name="Birthday"
                       id="birthday"
                       className="form__input"
                       placeholder="Birthday"
                       style={inputStyle}
+                      
                     />
+                    {error && <p style={{ color: 'red' }}>{error}</p>}
+                    </form>
                     <input
                       type="text"
                       name="Email"
@@ -153,6 +175,7 @@ function SignupPage() {
   border: "1px solid #008080",
   marginTop: "1.5em",
   marginBottom: "1em",
+  cursor: "pointer"
   };
   
   export default SignupPage;
