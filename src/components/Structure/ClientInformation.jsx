@@ -106,11 +106,11 @@ const profilPicture = {
 };
 const editProfil = {
   padding: "15px 30px",
-  backgroundColor: "#007bff",
+  backgroundColor: "rgb(0, 128, 128)",
   color: "#fff",
   border: "none",
-  borderRadius: "25px",
-  fontSize: "18px",
+  borderRadius: "10px",
+  fontSize: "17px",
   cursor: "pointer",
   transition: "background-color 0.3s ease",
 };

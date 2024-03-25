@@ -58,7 +58,7 @@ const headerContainer = {
   display: "flex",
   alignItems: "center",
   padding: "16px",
-  backgroundColor: "#1E90FF", // Ajout de couleur de fond
+  backgroundColor: "rgb(0, 128, 128)", // Ajout de couleur de fond
   color: "#fff", // Couleur du texte
   borderRadius:"12px",
 };
