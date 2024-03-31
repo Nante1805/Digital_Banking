@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import Header from "../Head/Header";
-import Profil from "../images/essai.jpg";
+import { formStyle, labelStyle, inputStyle, checkboxStyle, submitButtonStyle, accountsContainerStyle, accountStyle, modalContainerStyle, modalStyle } from '../../assets/withdrawalForm';
 
-function Account({ accountName, onClick }) {
+function Account({ account, onClick }) {
     return (
-        <div style={accountStyle} onClick={onClick}>
-            <h3>{accountName}</h3>
+        <div style={accountStyle} onClick={() => onClick(account)}>
+            <h3>{account}</h3>
             {/* Ajoutez d'autres détails du compte ici si nécessaire */}
         </div>
     );
@@ -13,6 +14,7 @@ function Account({ accountName, onClick }) {
 
 function WithdrawalForm() {
     const [selectedAccount, setSelectedAccount] = useState('');
+    const [accountTypes, setAccountTypes] = useState([]);
     const [showRegistrationForm, setShowRegistrationForm] = useState(false);
     const [registrationData, setRegistrationData] = useState({
         name: '',
@@ -22,8 +24,20 @@ function WithdrawalForm() {
         accountNumber: '',
     });
 
-    const handleAccountClick = (accountName) => {
-        setSelectedAccount(accountName);
+    useEffect(() => {
+        // Charger la liste des types de compte depuis l'API
+        axios.get('http://localhost:8080/api/account-types/names')
+            .then(response => {
+                setAccountTypes(response.data);
+                console.log("response", response.data);
+            })
+            .catch(error => {
+                console.error('Error fetching account types:', error);
+            });
+    }, []);
+
+    const handleAccountClick = (account) => {
+        setSelectedAccount(account.account_number);
         setShowRegistrationForm(true);
     };
 
@@ -53,27 +67,35 @@ function WithdrawalForm() {
     const [withdrawalAmount, setWithdrawalAmount] = useState('');
     const [withdrawalDateTime, setWithdrawalDateTime] = useState('');
     const [overdraftEnabled, setOverdraftEnabled] = useState(false);
-    const [interestRate7Days, setInterestRate7Days] = useState(1);
-    const [interestRateAfter7Days, setInterestRateAfter7Days] = useState(2);
+    const [interestRate7Days, setInterestRate7Days] = useState();
+    const [interestRateAfter7Days, setInterestRateAfter7Days] = useState();
 
     const handleWithdrawal = (event) => {
         event.preventDefault();
 
-        // Calculating total available balance (including overdraft if enabled)
-        let totalBalance = selectedAccount.balance;
-        if (overdraftEnabled) {
-            totalBalance += selectedAccount.salary / 3;
-        }
+        // Afficher les valeurs avant l'envoi de la requête de retrait
+        console.log('Selected Account:', selectedAccount);
+        console.log('Withdrawal Amount:', withdrawalAmount);
+        console.log('Withdrawal Date:', withdrawalDateTime);
+        console.log('Overdraft Enabled:', overdraftEnabled);
+        console.log('Interest Rate for First 7 Days:', interestRate7Days);
+        console.log('Interest Rate After 7 Days:', interestRateAfter7Days);
 
-        if (totalBalance >= withdrawalAmount) {
-            // Allow withdrawal
-            console.log('Withdrawal successful');
-            // Update account balance, etc.
-        } else {
-            // Display error message
-            console.log('Insufficient funds');
-        }
+        // Envoi de la requête de retrait à l'API avec la date de la transaction
+        axios.post(`http://localhost:8080/api/accounts/withdraw/${selectedAccount}`, {
+            balance: parseFloat(withdrawalAmount),
+            transactionDateTime: withdrawalDateTime // Envoyer la date de la transaction dans le corps de la requête
+        })
+            .then(response => {
+                console.log('Withdrawal successful');
+                // Mettre à jour l'état du compte ou effectuer d'autres opérations nécessaires
+            })
+            .catch(error => {
+                console.error('Error withdrawing funds:', error);
+                // Afficher un message d'erreur à l'utilisateur
+            });
     };
+
 
     return (
         <>
@@ -89,15 +111,17 @@ function WithdrawalForm() {
                     required
                     style={inputStyle}
                 >
-                    {/* Options for selecting account */}
+                    {accountTypes.map((account, index) => (
+                        <option key={index} value={account}>{account}</option>
+                    ))}
                 </select>
 
-                <label htmlFor="amount" style={labelStyle}>
-                    Withdrawal Amount:
+                <label htmlFor="balance" style={labelStyle}>
+                    Withdrawal Balance:
                 </label>
                 <input
                     type="number"
-                    id="amount"
+                    id="balance"
                     value={withdrawalAmount}
                     onChange={(e) => setWithdrawalAmount(e.target.value)}
                     required
@@ -159,10 +183,9 @@ function WithdrawalForm() {
             </form>
 
             <div style={accountsContainerStyle}>
-                <Account accountName="Account 1" onClick={() => handleAccountClick('Account 1')} />
-                <Account accountName="Account 2" onClick={() => handleAccountClick('Account 2')} />
-                <Account accountName="Account 3" onClick={() => handleAccountClick('Account 3')} />
-                <Account accountName="Account 4" onClick={() => handleAccountClick('Account 4')} />
+                {accountTypes.map((account, index) => (
+                    <Account key={index} account={account} onClick={handleAccountClick} />
+                ))}
             </div>
             {showRegistrationForm && (
                 <div style={modalContainerStyle}>
@@ -230,80 +253,4 @@ function WithdrawalForm() {
     );
 }
 
-const formStyle = {
-  maxWidth: '400px',
-  marginTop:"20px",
-  marginLeft:"60px",
-  padding: '20px',
-  border: '1px solid #ccc',
-  borderRadius: '5px',
-  backgroundColor: '#f9f9f9',
-};
-
-const labelStyle = {
-  display: 'block',
-  marginBottom: '5px',
-  color: '#333',
-};
-
-const inputStyle = {
-  width: '100%',
-  padding: '10px',
-  marginBottom: '10px',
-  borderRadius: '5px',
-  border: '1px solid #ccc',
-};
-
-const checkboxStyle = {
-  marginRight: '5px',
-};
-
-const submitButtonStyle = {
-  padding: '10px 20px',
-  backgroundColor: 'rgb(0, 128, 128)',
-  color: '#fff',
-  border: 'none',
-  borderRadius: '5px',
-  fontSize: '16px',
-  cursor: 'pointer',
-};
-
-
-//COMPTE DISPONIBLE
-const accountsContainerStyle = {
-    display: 'flex',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-  };
-  
-  const accountStyle = {
-    width: '200px',
-    height: '200px',
-    margin: '10px',
-    padding: '20px',
-    border: '1px solid #ccc',
-    borderRadius: '10px',
-    textAlign: 'center',
-    cursor: 'pointer',
-  };
-  
-  const modalContainerStyle = {
-    position: 'fixed',
-    top: '0',
-    left: '0',
-    width: '100%',
-    height: '100%',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    zIndex: '100',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-  };
-  
-  const modalStyle = {
-    width: '400px',
-    padding: '20px',
-    backgroundColor: '#fff',
-    borderRadius: '10px',
-  };
 export default WithdrawalForm;

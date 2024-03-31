@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { apiUrl } from '../../config/config';
-import { mainContentStyle, companyInfoStyle, loginFormStyle, inputStyle, submitButtonStyle } from '../../assets/signups';
+import { apiUrl } from '../config/config';
+import { mainContentStyle, companyInfoStyle, loginFormStyle, inputStyle, submitButtonStyle } from '../assets/signup';
 
 function SignupPage() {
     const [user, setUser] = useState({
@@ -23,7 +23,7 @@ function SignupPage() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await fetch(apiUrl +'/api/users',{
+            const response = await fetch(apiUrl/api/users, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
