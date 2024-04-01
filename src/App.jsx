@@ -7,6 +7,7 @@ import { Route } from "react-router-dom";
 import TopPage from "./components/Head/Header";
 import ClientInformation from "./components/Structure/ClientInformation"
 import  WithdrawalForm  from "./components/Structure/Acceuil";
+import BalanceViewer from "./components/Structure/BalanceViwer";
 function App() {
   return (
     <BrowserRouter>
@@ -16,6 +17,7 @@ function App() {
         <Route path="/TopPage" element={<TopPage />} />
         <Route path="/ClientInformation" element={<ClientInformation />} />
         <Route path="/WithdrawalForm" element={<WithdrawalForm />} />
+        <Route path="/BalanceViewer" element={<BalanceViewer />} />
       </Routes>
     </BrowserRouter>
   );
