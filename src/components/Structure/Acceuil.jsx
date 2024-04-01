@@ -2,19 +2,23 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Header from "../Head/Header";
 import { formStyle, labelStyle, inputStyle, checkboxStyle, submitButtonStyle, accountsContainerStyle, accountStyle, modalContainerStyle, modalStyle } from '../../assets/withdrawalForm';
-
+import ShowRegistrationForm from './ShowRegistration'; 
 function Account({ account, onClick }) {
     return (
         <div style={accountStyle} onClick={() => onClick(account)}>
             <h3>{account}</h3>
-            {/* Ajoutez d'autres détails du compte ici si nécessaire */}
         </div>
     );
 }
 
 function WithdrawalForm() {
     const [selectedAccount, setSelectedAccount] = useState('');
+    const [selectedAccountTypes, setSelectedAccountTypes] = useState('');
+    const [selectedCategoryId, setSelectedCategoryId] = useState('');
+    const [selectedAccountId, setSelectedAccountId] = useState('');
     const [accountTypes, setAccountTypes] = useState([]);
+    const [categoryOperations, setCategoryOperations] = useState([]);
+    const [accounts, setAccounts] = useState([]);
     const [showRegistrationForm, setShowRegistrationForm] = useState(false);
     const [registrationData, setRegistrationData] = useState({
         name: '',
@@ -25,6 +29,18 @@ function WithdrawalForm() {
     });
 
     useEffect(() => {
+        // Charger la liste des compte depuis l'API
+
+        // Charger la liste des comptes depuis l'API
+        axios.get('http://localhost:8080/api/accounts')
+            .then(response => {
+                setAccounts(response.data);
+                console.log("Accounts:", response.data);
+            })
+            .catch(error => {
+                console.error('Error fetching accounts:', error);
+            });
+
         // Charger la liste des types de compte depuis l'API
         axios.get('http://localhost:8080/api/account-types/names')
             .then(response => {
@@ -34,10 +50,21 @@ function WithdrawalForm() {
             .catch(error => {
                 console.error('Error fetching account types:', error);
             });
+
+
+        // Charger la liste des opérations de catégorie depuis l'API
+        axios.get('http://localhost:8080/api/categoryOperations')
+            .then(response => {
+                setCategoryOperations(response.data);
+                console.log("categoryOperations", response.data);
+            })
+            .catch(error => {
+                console.error('Error fetching category operations:', error);
+            });
     }, []);
 
     const handleAccountClick = (account) => {
-        setSelectedAccount(account.account_number);
+        setSelectedAccountTypes(account.account_number);
         setShowRegistrationForm(true);
     };
 
@@ -72,22 +99,27 @@ function WithdrawalForm() {
 
     const handleWithdrawal = (event) => {
         event.preventDefault();
-
-        // Afficher les valeurs avant l'envoi de la requête de retrait
-        console.log('Selected Account:', selectedAccount);
-        console.log('Withdrawal Amount:', withdrawalAmount);
-        console.log('Withdrawal Date:', withdrawalDateTime);
-        console.log('Overdraft Enabled:', overdraftEnabled);
-        console.log('Interest Rate for First 7 Days:', interestRate7Days);
-        console.log('Interest Rate After 7 Days:', interestRateAfter7Days);
-
+    
+        // Récupérer l'identifiant de la catégorie d'opération sélectionnée par l'utilisateur
+        const categoryId = selectedCategoryId;
+    
+        // Récupérer l'identifiant du compte sélectionné par l'utilisateur
+        const accountId = selectedAccountId;
+    
+        console.log("Selected Category ID:", categoryId); // Ajout du console.log pour l'ID de la catégorie
+        console.log("Selected Account ID:", accountId); // Ajout du console.log pour l'ID du compte
+    
         // Envoi de la requête de retrait à l'API avec la date de la transaction
-        axios.post(`http://localhost:8080/api/accounts/withdraw/${selectedAccount}`, {
+        axios.post(`http://localhost:8080/api/accounts/withdraw/${selectedAccountTypes}`, {
             balance: parseFloat(withdrawalAmount),
-            transactionDateTime: withdrawalDateTime // Envoyer la date de la transaction dans le corps de la requête
+            transactionDateTime: withdrawalDateTime, // Envoyer la date de la transaction dans le corps de la requête
+            id_accounts: accountId,
+            id_category_operation: categoryId
         })
             .then(response => {
                 console.log('Withdrawal successful');
+                // Création de la transaction en utilisant l'identifiant du compte
+                createTransaction(categoryId, accountId);
                 // Mettre à jour l'état du compte ou effectuer d'autres opérations nécessaires
             })
             .catch(error => {
@@ -95,7 +127,29 @@ function WithdrawalForm() {
                 // Afficher un message d'erreur à l'utilisateur
             });
     };
-
+    
+    
+    const createTransaction = (categoryId, accountId) => {
+        // Envoi de la requête de création de transaction à l'API
+        axios.post('http://localhost:8080/api/transactions', {
+            type: 'retrait',
+            date: withdrawalDateTime, // Utilisez la date et l'heure du retrait
+            amount: parseFloat(withdrawalAmount),
+            id_accounts: accountId, // Utilisez l'identifiant du compte approprié
+            id_category_operation: categoryId // Utilisez l'identifiant de la catégorie appropriée
+            // Ajoutez d'autres attributs de transaction si nécessaire
+        })
+            .then(response => {
+                console.log('Transaction created successfully');
+                console.log("response crete", response.data);
+                // Mettre à jour l'état de l'application ou effectuer d'autres opérations nécessaires
+            })
+            .catch(error => {
+                console.error('Error creating transaction:', error);
+                // Afficher un message d'erreur à l'utilisateur
+            });
+    };
+    
 
     return (
         <>
@@ -106,13 +160,42 @@ function WithdrawalForm() {
                 </label>
                 <select
                     id="account"
-                    value={selectedAccount}
-                    onChange={(e) => setSelectedAccount(e.target.value)}
+                    value={selectedAccountId}
+                    onChange={(e) => setSelectedAccountId(e.target.value)}
+                    required
+                    style={inputStyle}
+                >
+                    {accounts.map((account, index) => (
+                        <option key={index} value={account.id}>{account.account_number}</option>
+                    ))}
+                </select>
+                <label htmlFor="account_type" style={labelStyle}>
+                    Select Types Account:
+                </label>
+                <select
+                    id="accountType"
+                    value={selectedAccountTypes}
+                    onChange={(e) => setSelectedAccountTypes(e.target.value)}
                     required
                     style={inputStyle}
                 >
                     {accountTypes.map((account, index) => (
                         <option key={index} value={account}>{account}</option>
+                    ))}
+                </select>
+
+                <label htmlFor="category" style={labelStyle}>
+                    Select Category:
+                </label>
+                <select
+                    id="category"
+                    value={selectedCategoryId}
+                    onChange={(e) => setSelectedCategoryId(e.target.value)}
+                    required
+                    style={inputStyle}
+                >
+                    {categoryOperations.map((category, index) => (
+                        <option key={index} value={category.id}>{category.name}</option>
                     ))}
                 </select>
 
@@ -187,68 +270,9 @@ function WithdrawalForm() {
                     <Account key={index} account={account} onClick={handleAccountClick} />
                 ))}
             </div>
-            {showRegistrationForm && (
-                <div style={modalContainerStyle}>
-                    <div style={modalStyle}>
-                        {/* Ajoutez le formulaire d'inscription ici */}
-                        <h2>Registration Form for {selectedAccount}</h2>
-                        {/* Ajoutez les champs du formulaire ici */}
-                        <form onSubmit={handleRegistrationSubmit}>
-                            <label htmlFor="name">Name:</label>
-                            <input
-                                type="text"
-                                id="name"
-                                name="name"
-                                value={registrationData.name}
-                                onChange={handleInputChange}
-                                required
-                            />
 
-                            <label htmlFor="lastName">Last Name:</label>
-                            <input
-                                type="text"
-                                id="lastName"
-                                name="lastName"
-                                value={registrationData.lastName}
-                                onChange={handleInputChange}
-                                required
-                            />
-
-                            <label htmlFor="birthDate">Birth Date:</label>
-                            <input
-                                type="date"
-                                id="birthDate"
-                                name="birthDate"
-                                value={registrationData.birthDate}
-                                onChange={handleInputChange}
-                                required
-                            />
-
-                            <label htmlFor="salary">Salary:</label>
-                            <input
-                                type="number"
-                                id="salary"
-                                name="salary"
-                                value={registrationData.salary}
-                                onChange={handleInputChange}
-                                required
-                            />
-
-                            <label htmlFor="accountNumber">Account Number:</label>
-                            <input
-                                type="text"
-                                id="accountNumber"
-                                name="accountNumber"
-                                value={registrationData.accountNumber}
-                                onChange={handleInputChange}
-                                required
-                            />
-
-                            <button type="submit">Register</button>
-                        </form>
-                    </div>
-                </div>
-            )}
+            {showRegistrationForm && <ShowRegistrationForm registrationData={registrationData} handleInputChange={handleInputChange} handleRegistrationSubmit={handleRegistrationSubmit} />}
+            
         </>
     );
 }
