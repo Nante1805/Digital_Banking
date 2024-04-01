@@ -6,6 +6,7 @@ function BalanceViewer() {
     const [accounts, setAccounts] = useState([]);
     const [selectedAccountId, setSelectedAccountId] = useState(null);
     const [selectedAccount, setSelectedAccount] = useState(null);
+    const [selectedDate, setSelectedDate] = useState(new Date()); // State pour la date sélectionnée, initialisé à la date d'aujourd'hui
 
     useEffect(() => {
         fetchAccounts();
@@ -26,9 +27,14 @@ function BalanceViewer() {
         setSelectedAccount(account);
     };
 
+    const handleDateChange = (e) => {
+        const selectedDate = new Date(e.target.value);
+        setSelectedDate(selectedDate);
+    };
+
     return (
         <div className="balance-container">
-            <h1>Solde Principal</h1>
+            <h1>Solde</h1>
             <div className="account-dropdown">
                 <label htmlFor="account-select">Choisir un compte :</label>
                 <select id="account-select" value={selectedAccountId} onChange={(e) => handleAccountSelect(parseInt(e.target.value))}>
@@ -37,6 +43,10 @@ function BalanceViewer() {
                         <option key={account.id} value={account.id}>{account.account_number}</option>
                     ))}
                 </select>
+            </div>
+            <div className="date-picker">
+                <label htmlFor="date-select">Choisir une date :</label>
+                <input type="date" id="date-select" value={selectedDate.toISOString().split('T')[0]} onChange={handleDateChange} />
             </div>
             {selectedAccount && (
                 <div className="balance-card">
